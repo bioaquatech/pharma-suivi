@@ -1,0 +1,1080 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>SUIVI FACTURE — Pharmacie Dafeanne</title>
+  <link rel="stylesheet" href="css/app.css">
+</head>
+<body>
+
+<!-- ═══════════════════════════════════════════════════════════
+     SETUP PAGE (première installation)
+══════════════════════════════════════════════════════════════ -->
+
+<!-- ═══════════════════════════════════════════════════════════
+     LOGIN PAGE — Dark Theme
+══════════════════════════════════════════════════════════════ -->
+<div id="login-page">
+  <div class="lp-bg">
+    <div class="lp-card">
+      <div class="lp-logo">💊</div>
+      <div class="lp-title">SUIVI FACTURE</div>
+      <div class="lp-subtitle">SYSTÈME DE GESTION PHARMACEUTIQUE</div>
+      <div class="lp-clock" id="lp-clock">00:00:00</div>
+      <div class="lp-date" id="lp-date"></div>
+
+      <div id="login-error" class="lp-error hidden"></div>
+
+      <form id="login-form" autocomplete="off">
+        <div id="login-code-row" class="lp-field">
+          <label>CODE PHARMACIE</label>
+          <input type="text" id="login-code" placeholder="Ex: DAFEANNE" style="text-transform:uppercase" autocomplete="off" required>
+        </div>
+        <div id="login-email-row" class="lp-field hidden">
+          <label>EMAIL (Administrateur)</label>
+          <input type="email" id="login-email" placeholder="votre@email.com" autocomplete="email" required>
+        </div>
+        <div class="lp-field">
+          <label>MOT DE PASSE</label>
+          <input type="password" id="login-password" autocomplete="current-password" required>
+        </div>
+        <button type="submit" class="lp-btn" id="btn-login">ACCÉDER À MA PHARMACIE →</button>
+      </form>
+
+      <div class="lp-links">
+        <a href="#" onclick="toggleAdminLogin();return false;" id="lp-admin-link">🔑 Accès Administrateur</a>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════════════════════
+     APPLICATION PRINCIPALE
+══════════════════════════════════════════════════════════════ -->
+<div id="app" class="hidden">
+
+  <!-- SIDEBAR -->
+  <aside class="sidebar">
+    <div class="sidebar-brand">
+      <div class="brand-icon">💊</div>
+      <div class="brand-text"><h2>SUIVI FACTURE</h2><span>Pharmacie Dafeanne</span></div>
+    </div>
+
+    <nav class="sidebar-nav">
+      <div class="nav-section-label">Principal</div>
+      <div class="nav-item" data-view="dashboard"  onclick="navigate('dashboard')"><span class="icon">📊</span> Tableau de bord Quinzaines INAM AMU</div>
+      <div class="nav-item" data-view="quinzaines" onclick="navigate('quinzaines')"><span class="icon">📋</span> Quinzaines</div>
+      <div class="nav-item" data-view="nouvelle"   onclick="navigate('nouvelle')"><span class="icon">➕</span> Nouvelle saisie</div>
+
+      <div class="nav-section-label">Factures</div>
+      <div class="nav-item" data-view="assurances" id="nav-assurances" onclick="navigate('assurances')"><span class="icon">🏥</span> Assurances INAM AMU</div>
+      <div class="nav-item" data-view="inam-amu"    id="nav-inam-amu"    onclick="navigate('inam-amu')"><span class="icon">🏥</span> Paiements INAM AMU</div>
+      <div class="nav-item" data-view="caisse"      id="nav-caisse"      onclick="navigate('caisse')"><span class="icon">💰</span> Petite Caisse</div>
+      <div class="nav-item" data-view="fournisseurs" id="nav-fournisseurs" onclick="navigate('fournisseurs')"><span class="icon">🏪</span> Fournisseurs</div>
+      <div class="nav-item" data-view="catalogue-frs" id="nav-catalogue-frs" onclick="navigate('catalogue-frs')"><span class="icon">📋</span> Catalogue Fournisseurs</div>
+
+      <div class="nav-section-label" id="nav-section-data">Données</div>
+      <div class="nav-item" data-view="donnees" id="nav-donnees" onclick="navigate('donnees')"><span class="icon">📊</span> Section Données</div>
+      <div class="nav-item" data-view="journal" id="nav-journal" onclick="navigate('journal')"><span class="icon">📒</span> Journal de bord</div>
+
+      <div class="nav-section-label">Administration</div>
+      <div class="nav-item" data-view="import" id="nav-import" onclick="navigate('import')"><span class="icon">📥</span> Importer Excel</div>
+      <div class="nav-item" data-view="users" id="nav-users" onclick="navigate('users')"><span class="icon">👥</span> Mon équipe</div>
+      <div class="nav-item" id="nav-back-admin" onclick="backToAdmin()" style="display:none"><span class="icon">⬅️</span> Dashboard Admin</div>
+    </nav>
+
+    <div class="sidebar-footer">
+      <div style="font-size:10px;color:rgba(255,255,255,.35);margin-bottom:6px;text-align:center" id="sb-pharma-name"></div>
+      <div class="user-info">
+        <div class="user-avatar" id="sb-avatar">A</div>
+        <div class="user-details">
+          <div class="user-name" id="sb-name">—</div>
+          <div class="user-role" id="sb-role">—</div>
+        </div>
+      </div>
+      <button class="btn-logout" onclick="doLogout()">🚪 Déconnexion</button>
+    </div>
+  </aside>
+
+  <!-- CONTENU PRINCIPAL -->
+  <main class="content">
+    <div class="content-header">
+      <h1 id="content-title">Tableau de Bord</h1>
+    </div>
+    <div class="content-body">
+
+      <!-- ── DASHBOARD ─────────────────────────────────── -->
+
+
+      <!-- ── DÉTAIL QUINZAINE ───────────────────────────── -->
+      <div id="view-detail" class="hidden">
+        <!-- En-tête & récapitulatif comptes -->
+        <div class="card detail-header-card">
+          <div class="card-header">
+            <span class="card-title" id="detail-period-title">—</span>
+            <div style="display:flex;gap:8px">
+              <button class="btn btn-outline btn-sm" onclick="doExportPDF(appState.detailKey)">📄 PDF</button>
+              <button class="btn btn-outline btn-sm" onclick="doExportExcel(appState.detailKey)">📊 Excel</button>
+              <button class="btn btn-outline btn-sm" onclick="navigate('quinzaines')">← Retour</button>
+            </div>
+          </div>
+
+          <!-- DAFEANNE vs DÉPÔT côte à côte -->
+          <div class="detail-accounts">
+            <div class="detail-account dafeanne-account">
+              <div class="da-title">💊 DAFEANNE</div>
+              <div class="da-row"><span>INAM</span><strong class="amount dafeanne" id="det-df-inam">—</strong></div>
+              <div class="da-row"><span>AMU</span><strong class="amount dafeanne" id="det-df-amu">—</strong></div>
+              <div class="da-row da-total"><span>TOTAL DAFEANNE</span><strong class="amount dafeanne" id="det-df-tot">—</strong></div>
+            </div>
+            <div class="detail-divider">+</div>
+            <div class="detail-account depot-account">
+              <div class="da-title">🏪 DÉPÔT</div>
+              <div class="da-row"><span>INAM</span><strong class="amount depot" id="det-dp-inam">—</strong></div>
+              <div class="da-row"><span>AMU</span><strong class="amount depot" id="det-dp-amu">—</strong></div>
+              <div class="da-row da-total"><span>TOTAL DÉPÔT</span><strong class="amount depot" id="det-dp-tot">—</strong></div>
+            </div>
+            <div class="detail-divider">=</div>
+            <div class="detail-final">
+              <div class="df-row"><span>TOTAL INAM</span><strong class="amount inam" id="det-total-inam">—</strong></div>
+              <div class="df-row"><span>TOTAL AMU</span><strong class="amount amu" id="det-total-amu">—</strong></div>
+              <div class="df-row df-global"><span>FACTURE QUINZAINE</span><strong id="det-global">—</strong></div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Bannière clôture -->
+        <div id="cloture-banner" class="hidden cloture-banner open" style="margin-top:12px"></div>
+
+        <!-- Lots -->
+        <div id="lots-container" style="margin-top:8px"></div>
+      </div>
+
+      <!-- ── IMPORT EXCEL ───────────────────────────────── -->
+      <div id="view-import" class="hidden">
+
+        <!-- Import données historiques Excel (une seule fois) -->
+        <div class="card" style="margin-bottom:16px;border:2px solid var(--warning)">
+          <div class="card-header">
+            <span class="card-title">🗂️ Import données historiques Excel</span>
+          </div>
+          <div style="padding:14px 16px">
+            <p style="margin:0 0 10px;color:var(--text-muted);font-size:13px">
+              Importe dans Firestore toutes les données du fichier Excel : <strong>50 paiements INAM/AMU</strong>,
+              <strong>427 opérations caisse</strong> et <strong>396 factures fournisseurs</strong>.<br>
+              ⚠️ À n'effectuer <strong>qu'une seule fois</strong>. Si les données existent déjà, des doublons seront créés.
+            </p>
+            <button class="btn btn-primary" id="btn-import-historique" onclick="importHistoricalData()">
+              📥 Importer données Excel (INAM/AMU + Caisse + Fournisseurs)
+            </button>
+          </div>
+        </div>
+
+        <div class="card">
+          <div class="card-header"><span class="card-title">Importer un fichier Excel</span></div>
+          <div class="alert alert-info">
+            📌 Glissez votre fichier <strong>FICHIER DE FACTURATION INAM.xlsx</strong>. Toutes les feuilles Q1/Q2 seront détectées, les montants DAFEANNE et DÉPÔT seront séparés automatiquement.
+          </div>
+          <label for="file-input" style="cursor:pointer">
+            <div class="drop-zone" id="drop-zone">
+              <div class="drop-icon">📂</div>
+              <h3>Glissez votre fichier Excel ici</h3>
+              <p>ou cliquez pour sélectionner</p>
+              <p style="margin-top:8px;font-size:12px;color:var(--text-muted)">Formats .xlsx / .xls</p>
+            </div>
+          </label>
+          <input type="file" id="file-input" accept=".xlsx,.xls" class="hidden" onchange="handleFileSelect(this)">
+
+          <div id="import-loading" class="hidden" style="text-align:center;padding:40px">
+            <div style="font-size:40px;margin-bottom:12px">⏳</div>
+            <p>Analyse du fichier en cours…</p>
+          </div>
+
+          <div id="import-preview" class="hidden" style="margin-top:20px">
+            <div class="import-stats">
+              <div class="import-stat"><div class="import-stat-value" id="imp-nb-sheets">0</div><div class="import-stat-label">Feuilles</div></div>
+              <div class="import-stat"><div class="import-stat-value" id="imp-nb-lots">0</div><div class="import-stat-label">Lots</div></div>
+              <div class="import-stat"><div class="import-stat-value" id="imp-nb-bons">0</div><div class="import-stat-label">Bons</div></div>
+            </div>
+            <div class="table-wrapper" style="margin-bottom:16px">
+              <table>
+                <thead>
+                  <tr>
+                    <th>Feuille</th><th>Période</th><th>Q.</th><th>Lots</th>
+                    <th class="th-dafeanne">DAFEANNE INAM</th><th class="th-dafeanne">DAFEANNE AMU</th>
+                    <th class="th-depot">DÉPÔT INAM</th><th class="th-depot">DÉPÔT AMU</th>
+                    <th class="th-total">TOTAL</th><th>Statut</th>
+                  </tr>
+                </thead>
+                <tbody id="import-results-body"></tbody>
+              </table>
+            </div>
+            <div style="display:flex;gap:10px;justify-content:flex-end">
+              <button class="btn btn-outline" onclick="renderImportView()">✕ Annuler</button>
+              <button class="btn btn-success" id="btn-confirm-import" onclick="confirmImport()">✅ Confirmer l'import</button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ── UTILISATEURS ───────────────────────────────── -->
+      <div id="view-users" class="hidden">
+        <div class="card">
+          <div class="card-header">
+            <span class="card-title">👥 Mon Équipe — Opérateurs</span>
+            <button class="btn btn-primary" onclick="openAddUser()">➕ Nouvel opérateur</button>
+          </div>
+          <div class="table-wrapper">
+            <table>
+              <thead><tr><th>Nom</th><th>Email</th><th>Rôle</th><th>Créé le</th><th>Actions</th></tr></thead>
+              <tbody id="users-tbody"></tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+
+      <!-- ── PETITE CAISSE ──────────────────────────────── -->
+      <div id="view-caisse" class="hidden">
+        <div class="card" style="margin-bottom:16px">
+          <div class="card-header">
+            <span class="card-title">💰 Petite Caisse</span>
+            <div style="display:flex;gap:8px">
+              <button class="btn btn-success" id="btn-recharge-caisse" onclick="openRecharge()">➕ Recharge</button>
+              <button class="btn btn-primary" onclick="openDepense()">💸 Dépense</button>
+              <button class="btn btn-outline btn-sm" onclick="exportCaisseExcel()">📊 Excel</button>
+            </div>
+          </div>
+          <div class="caisse-solde-bar">
+            <div>Solde actuel : <strong id="caisse-solde" class="amount total">—</strong></div>
+            <div style="font-size:12px;color:var(--text-muted)">Dernière recharge : <span id="caisse-last-recharge">—</span></div>
+          </div>
+        </div>
+        <div id="caisse-notif-bar" class="hidden frs-notif-bar"></div>
+        <div class="card">
+          <div class="table-wrapper">
+            <table>
+              <thead><tr><th>Date</th><th>Type</th><th>Désignation / Source</th><th>Réf. transaction</th><th>Montant</th><th>Solde après</th><th>Obs.</th><th></th></tr></thead>
+              <tbody id="caisse-tbody"></tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+
+      <!-- ── ASSURANCES INAM AMU ────────────────────────── -->
+      <div id="view-assurances" class="hidden">
+        <!-- Contrôles de sélection -->
+        <div class="card">
+          <div class="card-header">
+            <span class="card-title">🏥 Saisie Assurances INAM AMU</span>
+          </div>
+          <div style="padding:16px;display:flex;gap:12px;flex-wrap:wrap">
+            <select id="ass-year" class="filter-select" style="flex:1;min-width:150px">
+              <option value="">Année</option>
+              <option value="2025">2025</option>
+              <option value="2026" selected>2026</option>
+              <option value="2027">2027</option>
+            </select>
+            <select id="ass-month" class="filter-select" style="flex:1;min-width:150px">
+              <option value="">Mois</option>
+              <option value="1">Janvier</option><option value="2">Février</option>
+              <option value="3">Mars</option><option value="4">Avril</option>
+              <option value="5">Mai</option><option value="6">Juin</option>
+              <option value="7">Juillet</option><option value="8">Août</option>
+              <option value="9">Septembre</option><option value="10">Octobre</option>
+              <option value="11">Novembre</option><option value="12">Décembre</option>
+            </select>
+            <select id="ass-period" class="filter-select" style="flex:1;min-width:150px">
+              <option value="">Quinzaine</option>
+              <option value="Q1">Q1 (1-15)</option>
+              <option value="Q2">Q2 (16-31)</option>
+            </select>
+            <button class="btn btn-primary" onclick="assLoadData()" style="min-width:100px">📂 Charger</button>
+          </div>
+        </div>
+
+        <!-- État de la saisie -->
+        <div id="ass-status" style="margin-top:12px;padding:12px;border-radius:4px;display:none">
+          <span id="ass-status-text"></span>
+        </div>
+
+        <!-- Onglets INAM / AMU -->
+        <div style="display:flex;gap:8px;margin-top:16px;border-bottom:2px solid var(--border);padding-bottom:0">
+          <button class="btn btn-outline" id="ass-tab-inam" onclick="assSwitchTab('inam')" style="border-bottom:3px solid var(--primary);border-radius:0;font-weight:700">🔸 LOTS INAM</button>
+          <button class="btn btn-outline" id="ass-tab-amu" onclick="assSwitchTab('amu')" style="border-bottom:3px solid transparent;border-radius:0">🔵 LOTS AMU</button>
+        </div>
+
+        <!-- Section INAM -->
+        <div id="ass-inam-container" style="margin-top:16px">
+          <div class="card">
+            <div class="table-wrapper">
+              <table id="ass-table-inam" style="width:100%">
+                <thead>
+                  <tr>
+                    <th style="width:120px">Date</th>
+                    <th class="amount" style="width:100px">INAM-DF</th>
+                    <th class="amount" style="width:100px">INAM-DP</th>
+                    <th class="amount" style="width:100px;background:var(--primary)15;font-weight:bold">TOTAL</th>
+                    <th style="width:40px">Action</th>
+                  </tr>
+                </thead>
+                <tbody id="ass-tbody-inam"></tbody>
+              </table>
+            </div>
+            <div style="padding:12px;border-top:1px solid var(--border);display:flex;gap:8px">
+              <button class="btn btn-outline" onclick="assAddRow('inam')">➕ Ajouter bon INAM</button>
+              <button class="btn btn-success" onclick="assSave('inam')" style="margin-left:auto">💾 Enregistrer INAM</button>
+              <button class="btn btn-warning" onclick="assClose('inam')">✓ Clôturer INAM</button>
+            </div>
+          </div>
+          <div class="card" style="margin-top:12px;background:var(--primary)15">
+            <div style="padding:16px">
+              <div style="font-weight:600;color:var(--primary);margin-bottom:12px">TOTAUX INAM</div>
+              <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:16px;font-size:14px">
+                <div>INAM-DF: <strong id="ass-total-inamdf">0</strong> F</div>
+                <div>INAM-DP: <strong id="ass-total-inamdp">0</strong> F</div>
+                <div style="font-weight:bold;padding:8px;background:white;border-radius:4px;text-align:center">TOTAL: <strong id="ass-total-inam-general">0</strong> F</div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Section AMU -->
+        <div id="ass-amu-container" style="margin-top:16px;display:none">
+          <div class="card">
+            <div class="table-wrapper">
+              <table id="ass-table-amu" style="width:100%">
+                <thead>
+                  <tr>
+                    <th style="width:120px">Date</th>
+                    <th class="amount" style="width:100px">AMU-DF</th>
+                    <th class="amount" style="width:100px">AMU-DP</th>
+                    <th class="amount" style="width:100px;background:var(--primary)15;font-weight:bold">TOTAL</th>
+                    <th style="width:40px">Action</th>
+                  </tr>
+                </thead>
+                <tbody id="ass-tbody-amu"></tbody>
+              </table>
+            </div>
+            <div style="padding:12px;border-top:1px solid var(--border);display:flex;gap:8px">
+              <button class="btn btn-outline" onclick="assAddRow('amu')">➕ Ajouter bon AMU</button>
+              <button class="btn btn-success" onclick="assSave('amu')" style="margin-left:auto">💾 Enregistrer AMU</button>
+              <button class="btn btn-warning" onclick="assClose('amu')">✓ Clôturer AMU</button>
+            </div>
+          </div>
+          <div class="card" style="margin-top:12px;background:var(--primary)15">
+            <div style="padding:16px">
+              <div style="font-weight:600;color:var(--primary);margin-bottom:12px">TOTAUX AMU</div>
+              <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:16px;font-size:14px">
+                <div>AMU-DF: <strong id="ass-total-amudf">0</strong> F</div>
+                <div>AMU-DP: <strong id="ass-total-amudp">0</strong> F</div>
+                <div style="font-weight:bold;padding:8px;background:white;border-radius:4px;text-align:center">TOTAL: <strong id="ass-total-amu-general">0</strong> F</div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ── FOURNISSEURS ───────────────────────────────── -->
+      <div id="view-fournisseurs" class="hidden">
+        <div style="display:flex;gap:12px;margin-bottom:16px;flex-wrap:wrap">
+          <div class="frs-stat-card"><div id="frs-stat-total" class="frs-stat-val">0</div><div>Factures totales</div></div>
+          <div class="frs-stat-card" style="border-color:var(--danger);cursor:pointer;transition:all .2s" onclick="filterFrsUrgent()" id="frs-btn-urgent"><div id="frs-stat-due" class="frs-stat-val" style="color:var(--danger)">0</div><div>Échéances &lt;72h</div></div>
+          <div class="frs-stat-card" style="border-color:var(--warning)"><div id="frs-stat-encours" class="frs-stat-val" style="color:var(--warning)">0</div><div>En cours</div></div>
+          <div class="frs-stat-card" style="border-color:var(--success)"><div id="frs-stat-paye" class="frs-stat-val" style="color:var(--success)">0</div><div>Payées</div></div>
+        </div>
+        <div class="card">
+          <div class="card-header" style="flex-wrap:wrap;gap:10px">
+            <span class="card-title">🏪 Factures Fournisseurs</span>
+            <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">
+              <!-- Vue Active / Archives -->
+              <div style="display:flex;gap:6px;border-right:1px solid var(--border);padding-right:8px">
+                <button class="btn btn-outline btn-sm" id="frs-btn-active" style="font-weight:700" onclick="switchFrsView('active')">📋 Actives</button>
+                <button class="btn btn-outline btn-sm" id="frs-btn-archives" onclick="switchFrsView('archives')">📦 Archives</button>
+              </div>
+
+              <!-- Filtres (actifs seulement) -->
+              <div id="frs-filters-active" class="filter-tabs">
+                <button class="filter-tab active" id="frs-tab-all"    onclick="setFrsFilter('all')">Toutes</button>
+                <button class="filter-tab"        id="frs-tab-apayer" onclick="setFrsFilter('apayer')">À payer</button>
+                <button class="filter-tab"        id="frs-tab-payees" onclick="setFrsFilter('payees')">Payées</button>
+              </div>
+              <select id="frs-filter-month" onchange="renderFournisseurs()" class="filter-select">
+                <option value="">Tous les mois</option>
+              </select>
+              <button class="btn btn-outline btn-sm" onclick="selectAllFrs()">☑️ Tout sélectionner</button>
+              <button class="btn btn-outline btn-sm" onclick="deselectAllFrs()">☐ Tout désélectionner</button>
+              <button class="btn btn-outline btn-sm" onclick="exportFrsExcelSelected()">📊 Excel (sélection)</button>
+              <button class="btn btn-outline btn-sm" onclick="exportFrsExcel()">📊 Excel (tous)</button>
+              <button class="btn btn-outline btn-sm" onclick="exportFrsPDF()">📄 PDF</button>
+              <button class="btn btn-danger btn-sm" onclick="exportFrsUrgent()">⚠️ Urgentes</button>
+              <button class="btn btn-success btn-sm" onclick="exportFrsApayerByMonth()">💰 À payer (mois)</button>
+              <button class="btn btn-primary" onclick="openNewFacture()">➕ Nouvelle facture</button>
+            </div>
+          </div>
+          <div id="frs-notif-bar" class="hidden frs-notif-bar"></div>
+
+          <!-- Vue Actives -->
+          <div id="frs-view-active" class="table-wrapper">
+            <table>
+              <thead><tr><th style="width:40px"><input type="checkbox" id="frs-select-all" onchange="toggleSelectAllFrs()"></th><th>Date</th><th>Fournisseur</th><th>Désignation</th><th>Montant</th><th>Échéance</th><th>Jours</th><th>Mode paiement</th><th>Montant payé</th><th>Date paiement</th><th>N° Chèque</th><th>Bénéficiaire</th><th>Statut</th><th>Observations</th><th>Alerte jours</th><th>Prospective</th><th>Actions</th></tr></thead>
+              <tbody id="frs-tbody"></tbody>
+            </table>
+          </div>
+
+          <!-- Vue Archives -->
+          <div id="frs-view-archives" style="display:none" class="table-wrapper">
+            <table>
+              <thead><tr><th>Date</th><th>Fournisseur</th><th>Désignation</th><th>Montant</th><th>Échéance</th><th>Mode paiement</th><th>Montant payé</th><th>Date paiement</th><th>N° Chèque</th><th>Bénéficiaire</th><th>Statut</th><th>Observations</th><th>Alerte jours</th><th>Prospective</th><th>Archivée</th><th>Actions</th></tr></thead>
+              <tbody id="frs-archives-tbody"></tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+
+      <!-- ── CATALOGUE FOURNISSEURS ─────────────────── -->
+      <div id="view-catalogue-frs" class="hidden">
+        <div class="card">
+          <div class="card-header" style="display:flex;justify-content:space-between;align-items:center">
+            <span>Catalogue des Fournisseurs</span>
+            <button class="btn btn-primary btn-sm" onclick="openAddCatFrs()">+ Ajouter un fournisseur</button>
+          </div>
+          <div class="card-body" style="padding:0">
+            <table class="data-table">
+              <thead><tr><th>Nom</th><th>Téléphone</th><th>Adresse</th><th>Actions</th></tr></thead>
+              <tbody id="cat-frs-tbody"><tr><td colspan="4" style="text-align:center;padding:20px">Chargement…</td></tr></tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+
+      <!-- ── JOURNAL DE BORD ─────────────────────────── -->
+      <div id="view-journal" class="hidden">
+        <div class="card">
+          <div class="card-header">Journal de bord</div>
+          <div class="card-body" style="padding:0">
+            <table class="data-table">
+              <thead><tr><th>Date</th><th>Heure</th><th>Utilisateur</th><th>Action</th><th>Détails</th></tr></thead>
+              <tbody id="journal-tbody"><tr><td colspan="5" style="text-align:center;padding:20px">Chargement…</td></tr></tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+
+      <!-- ── SECTION DONNÉES ─────────────────────────── -->
+      <div id="view-donnees" class="hidden">
+        <div class="card">
+          <div class="card-header">
+            <span class="card-title">📊 Section Données — Exports</span>
+          </div>
+          <div class="card-body" style="padding:24px">
+            <div class="form-row cols-3" style="margin-bottom:20px">
+              <div class="field">
+                <label>Module</label>
+                <select id="donnees-module" onchange="previewDonnees()">
+                  <option value="inam">INAM / AMU</option>
+                  <option value="caisse">Petite Caisse</option>
+                  <option value="fournisseurs">Fournisseurs</option>
+                </select>
+              </div>
+              <div class="field">
+                <label>Date début</label>
+                <input type="date" id="donnees-date-debut" onchange="previewDonnees()">
+              </div>
+              <div class="field">
+                <label>Date fin</label>
+                <input type="date" id="donnees-date-fin" onchange="previewDonnees()">
+              </div>
+            </div>
+            <div style="display:flex;gap:12px;margin-bottom:24px;flex-wrap:wrap">
+              <button class="btn btn-primary" onclick="exportDonneesExcel()">📊 Exporter Excel</button>
+              <button class="btn btn-outline" onclick="exportDonneesPDF()">📄 Exporter PDF</button>
+            </div>
+            <div id="donnees-preview-count" style="color:var(--text-muted);font-size:14px;margin-bottom:12px"></div>
+            <div id="donnees-preview-table"></div>
+          </div>
+        </div>
+      </div>
+
+    </div><!-- /content-body -->
+  </main>
+</div><!-- /app -->
+
+<!-- ═══════════════════════════════════════════════════════════
+     MODALS
+══════════════════════════════════════════════════════════════ -->
+<div id="modal-overlay" class="modal-overlay hidden">
+
+  <!-- Modifier un bon -->
+  <div class="modal modal-md hidden" id="modal-edit-bon">
+    <div class="modal-header">
+      <h3>✏️ Modifier — <span id="eb-label"></span></h3>
+      <button class="btn-close" onclick="closeModal()">×</button>
+    </div>
+    <div class="modal-body">
+      <!-- Mode entité unique (INAM ou AMU) -->
+      <div class="form-row cols-2" id="eb-row-df-simple" style="display:none">
+        <div class="field"><label id="eb-lbl-df-simple">DAFEANNE (F)</label><input type="number" min="0" id="eb-df-simple"></div>
+      </div>
+      <div class="form-row cols-2" id="eb-row-dp-simple" style="display:none">
+        <div class="field"><label id="eb-lbl-dp-simple">DÉPÔT (F)</label><input type="number" min="0" id="eb-dp-simple"></div>
+      </div>
+      <!-- Mode ancien format (INAM + AMU sur même ligne) -->
+      <div class="accounts-form-grid">
+        <div class="af-section dafeanne-section">
+          <div class="af-title">💊 DAFEANNE</div>
+          <div class="form-row cols-2" id="eb-row-df-inam">
+            <div class="field"><label>INAM (F)</label><input type="number" min="0" id="eb-df-inam"></div>
+          </div>
+          <div class="form-row cols-2" id="eb-row-df-amu">
+            <div class="field"><label>AMU (F)</label><input type="number" min="0" id="eb-df-amu"></div>
+          </div>
+        </div>
+        <div class="af-section depot-section">
+          <div class="af-title">🏪 DÉPÔT</div>
+          <div class="form-row cols-2" id="eb-row-dp-inam">
+            <div class="field"><label>INAM (F)</label><input type="number" min="0" id="eb-dp-inam"></div>
+          </div>
+          <div class="form-row cols-2" id="eb-row-dp-amu">
+            <div class="field"><label>AMU (F)</label><input type="number" min="0" id="eb-dp-amu"></div>
+          </div>
+        </div>
+      </div>
+      <div class="form-row" style="margin-top:4px">
+        <div class="field"><label>Observation / Remarque</label><textarea id="eb-remarque" rows="2" placeholder="Erreur, observation…"></textarea></div>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-outline" onclick="closeModal()">Annuler</button>
+      <button class="btn btn-primary" id="btn-eb-save">💾 Enregistrer</button>
+    </div>
+  </div>
+
+  <!-- Utilisateur -->
+  <div class="modal modal-sm hidden" id="modal-user">
+    <div class="modal-header">
+      <h3 id="modal-user-title">Utilisateur</h3>
+      <button class="btn-close" onclick="closeModal()">×</button>
+    </div>
+    <div class="modal-body">
+      <input type="hidden" id="user-uid">
+      <div class="form-row"><div class="field"><label>Nom complet *</label><input type="text" id="user-name"></div></div>
+      <input type="hidden" id="user-email">
+      <div class="form-row" id="user-password-row">
+        <div class="field"><label>Mot de passe</label><input type="password" id="user-password" autocomplete="new-password"></div>
+      </div>
+      <div class="form-row">
+        <div class="field">
+          <label>Rôle *</label>
+          <select id="user-role">
+            <option value="operateur">Opérateur</option>
+            <option value="assistant">Assistant (peut clôturer)</option>
+            <option value="titulaire">Pharmacien Titulaire</option>
+          </select>
+        </div>
+      </div>
+      <div class="form-row" style="margin-top:4px">
+        <div class="field">
+          <label style="margin-bottom:8px">Permissions spécifiques</label>
+          <div class="perms-grid">
+            <label class="perm-check"><input type="checkbox" id="perm-cloturer"> Clôturer quinzaine</label>
+            <label class="perm-check"><input type="checkbox" id="perm-rouvrir"> Rouvrir quinzaine</label>
+            <label class="perm-check"><input type="checkbox" id="perm-inam"> Gérer INAM/AMU</label>
+            <label class="perm-check"><input type="checkbox" id="perm-caisse"> Gérer caisse (dépenses)</label>
+            <label class="perm-check"><input type="checkbox" id="perm-recharge"> Recharger caisse</label>
+            <label class="perm-check"><input type="checkbox" id="perm-fournisseurs"> Gérer fournisseurs</label>
+            <label class="perm-check"><input type="checkbox" id="perm-import"> Importer Excel</label>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-outline" onclick="closeModal()">Annuler</button>
+      <button class="btn btn-primary" id="btn-save-user">💾 Enregistrer</button>
+    </div>
+  </div>
+
+  <!-- Modal Entrée INAM/AMU -->
+  <div class="modal modal-sm hidden" id="modal-inam-entry">
+    <div class="modal-header">
+      <h3 id="inam-entry-title">🏥 Nouvelle entrée INAM / AMU</h3>
+      <button class="btn-close" onclick="closeModal()">×</button>
+    </div>
+    <div class="modal-body">
+      <input type="hidden" id="inam-entry-id">
+      <div class="form-row cols-2">
+        <div class="field">
+          <label>Date *</label>
+          <input type="date" id="inam-entry-date" required>
+        </div>
+        <div class="field">
+          <label>Entité *</label>
+          <select id="inam-entry-entite" required>
+            <option value="INAM">INAM</option>
+            <option value="AMU">AMU</option>
+          </select>
+        </div>
+      </div>
+      <div class="form-row">
+        <div class="field">
+          <label>Quinzaine *</label>
+          <div style="display:flex;gap:6px;align-items:center;flex-wrap:wrap">
+            <select id="inam-entry-qnum" style="width:70px">
+              <option value="Q1">Q1</option>
+              <option value="Q2">Q2</option>
+            </select>
+            <select id="inam-entry-mois" style="flex:1;min-width:110px">
+              <option>JANVIER</option><option>FÉVRIER</option><option>MARS</option>
+              <option>AVRIL</option><option>MAI</option><option>JUIN</option>
+              <option>JUILLET</option><option>AOÛT</option><option>SEPTEMBRE</option>
+              <option>OCTOBRE</option><option>NOVEMBRE</option><option>DÉCEMBRE</option>
+            </select>
+            <select id="inam-entry-annee" style="width:80px"></select>
+            <label style="display:flex;align-items:center;gap:4px;font-size:13px;white-space:nowrap;cursor:pointer">
+              <input type="checkbox" id="inam-entry-bis"> BIS
+            </label>
+          </div>
+          <div style="font-size:12px;color:var(--text-muted);margin-top:4px">
+            Aperçu : <strong id="inam-quinzaine-preview">—</strong>
+          </div>
+        </div>
+      </div>
+      <div class="form-row cols-2">
+        <div class="field">
+          <label>Montant Facturé (F) *</label>
+          <input type="number" id="inam-entry-facture" min="0" value="0" required>
+        </div>
+        <div class="field">
+          <label>Montant Payé (F)</label>
+          <input type="number" id="inam-entry-paye" min="0" value="0">
+        </div>
+      </div>
+      <div class="form-row cols-2">
+        <div class="field">
+          <label>Statut</label>
+          <select id="inam-entry-statut">
+            <option value="non payé">Non payé</option>
+            <option value="en cours de paiement">En cours de paiement</option>
+            <option value="payé">Payé</option>
+          </select>
+        </div>
+        <div class="field">
+          <label>Date de virement</label>
+          <input type="date" id="inam-entry-virement">
+        </div>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-outline" onclick="closeModal()">Annuler</button>
+      <button class="btn btn-success" onclick="saveInamEntry()">💾 Enregistrer</button>
+    </div>
+  </div>
+
+  <!-- Modal Recharge Caisse -->
+  <div class="modal modal-sm hidden" id="modal-recharge">
+    <div class="modal-header">
+      <h3>➕ Recharge Caisse</h3>
+      <button class="btn-close" onclick="closeModal()">×</button>
+    </div>
+    <div class="modal-body">
+      <input type="hidden" id="recharge-id">
+      <div class="form-row cols-2">
+        <div class="field"><label>Date *</label><input type="date" id="recharge-date" required></div>
+        <div class="field"><label>Montant (F) *</label><input type="number" id="recharge-montant" min="0" value="0" required></div>
+      </div>
+      <div class="form-row">
+        <div class="field">
+          <label>Type de recharge *</label>
+          <select id="recharge-type" onchange="onRechargeTypeChange()">
+            <option value="espece">Espèce</option>
+            <option value="mobilemoney">Mobile Money</option>
+          </select>
+        </div>
+      </div>
+      <div class="form-row hidden" id="recharge-ref-row">
+        <div class="field"><label>Référence transaction *</label><input type="text" id="recharge-ref" placeholder="Ex: TG-12345678"></div>
+      </div>
+      <div class="form-row">
+        <div class="field"><label>Observations</label><textarea id="recharge-obs" rows="2" placeholder="Note optionnelle…"></textarea></div>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-outline" onclick="closeModal()">Annuler</button>
+      <button class="btn btn-success" onclick="saveRecharge()">💾 Enregistrer</button>
+    </div>
+  </div>
+
+  <!-- Modal Dépense Caisse -->
+  <div class="modal modal-sm hidden" id="modal-depense">
+    <div class="modal-header">
+      <h3>💸 Nouvelle Dépense</h3>
+      <button class="btn-close" onclick="closeModal()">×</button>
+    </div>
+    <div class="modal-body">
+      <input type="hidden" id="depense-id">
+      <div class="form-row cols-2">
+        <div class="field"><label>Date *</label><input type="date" id="depense-date" required></div>
+        <div class="field"><label>Montant (F) *</label><input type="number" id="depense-montant" min="0" value="0" required></div>
+      </div>
+      <div class="form-row">
+        <div class="field"><label>Fournisseur / Bénéficiaire</label><input type="text" id="depense-fournisseur" placeholder="Nom…"></div>
+      </div>
+      <div class="form-row">
+        <div class="field"><label>Désignation *</label><input type="text" id="depense-designation" required placeholder="Description de la dépense…"></div>
+      </div>
+      <div class="form-row">
+        <div class="field"><label>Observations</label><textarea id="depense-obs" rows="2"></textarea></div>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-outline" onclick="closeModal()">Annuler</button>
+      <button class="btn btn-primary" onclick="saveDepense()">💾 Enregistrer</button>
+    </div>
+  </div>
+
+  <!-- Modal Catalogue Fournisseur -->
+  <div class="modal modal-sm hidden" id="modal-cat-frs">
+    <div class="modal-header">
+      <h3 id="modal-cat-frs-title">🏭 Fournisseur</h3>
+      <button class="btn-close" onclick="closeModal()">×</button>
+    </div>
+    <div class="modal-body">
+      <input type="hidden" id="cat-frs-id">
+      <div class="form-row"><div class="field"><label>Nom *</label><input type="text" id="cat-frs-nom" required></div></div>
+      <div class="form-row"><div class="field"><label>Téléphone</label><input type="text" id="cat-frs-tel"></div></div>
+      <div class="form-row"><div class="field"><label>Adresse</label><input type="text" id="cat-frs-adresse"></div></div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-outline" onclick="closeModal()">Annuler</button>
+      <button class="btn btn-primary" onclick="saveCatFrs()">Enregistrer</button>
+    </div>
+  </div>
+
+  <!-- Modal Facture Fournisseur -->
+  <div class="modal modal-md hidden" id="modal-facture">
+    <div class="modal-header">
+      <h3 id="modal-facture-title">🏪 Facture Fournisseur</h3>
+      <button class="btn-close" onclick="closeModal()">×</button>
+    </div>
+    <div class="modal-body">
+      <input type="hidden" id="facture-id">
+      <div class="form-row cols-2">
+        <div class="field"><label>Date facture *</label><input type="date" id="facture-date" required></div>
+        <div class="field"><label>Échéance *</label><input type="date" id="facture-echeance" required></div>
+      </div>
+      <div class="form-row cols-2">
+        <div class="field"><label>Fournisseur *</label><input type="text" id="facture-fournisseur" list="frs-list" required></div>
+        <div class="field"><label>Montant (F) *</label><input type="number" id="facture-montant" min="0" required></div>
+      </div>
+      <datalist id="frs-list"></datalist>
+      <div class="form-row">
+        <div class="field"><label>Désignation</label><input type="text" id="facture-designation"></div>
+      </div>
+      <div class="form-row cols-2">
+        <div class="field">
+          <label>Mode de paiement</label>
+          <select id="facture-mode">
+            <option value="">—</option>
+            <option value="Chèque barré">Chèque barré</option>
+            <option value="Chèque non barré">Chèque non barré</option>
+            <option value="TMoney">TMoney</option>
+            <option value="Orange Money">Orange Money</option>
+            <option value="Virement bancaire">Virement bancaire</option>
+            <option value="Espèces">Espèces</option>
+          </select>
+        </div>
+        <div class="field"><label>N° Chèque</label><input type="text" id="facture-numero-cheque" placeholder="Ex: 123456"></div>
+      </div>
+      <div class="form-row cols-2">
+        <div class="field"><label>Référence / Autre</label><input type="text" id="facture-ref"></div>
+        <div class="field">
+          <label>Bénéficiaire du chèque</label>
+          <div style="display:flex;gap:16px;margin-top:6px">
+            <label style="display:flex;align-items:center;gap:6px;cursor:pointer">
+              <input type="radio" name="beneficiaire" value="DAFEANNE" id="facture-beneficiaire-dafeanne" onchange="selectBeneficiaire('DAFEANNE')">
+              <span>DAFEANNE</span>
+            </label>
+            <label style="display:flex;align-items:center;gap:6px;cursor:pointer">
+              <input type="radio" name="beneficiaire" value="DÉPÔT" id="facture-beneficiaire-depot" onchange="selectBeneficiaire('DÉPÔT')">
+              <span>DÉPÔT</span>
+            </label>
+          </div>
+        </div>
+      </div>
+      <div class="form-row cols-2">
+        <div class="field">
+          <label>Statut</label>
+          <select id="facture-statut">
+            <option value="non payé">Non payé</option>
+            <option value="en cours">En cours</option>
+            <option value="payé">Payé</option>
+          </select>
+        </div>
+        <div class="field"><label>Date paiement</label><input type="date" id="facture-date-paye"></div>
+      </div>
+      <div class="form-row">
+        <div class="field"><label>Observations</label><textarea id="facture-obs" rows="2"></textarea></div>
+      </div>
+      <div class="form-row">
+        <label class="perm-check"><input type="checkbox" id="facture-prospective" onchange="onProspectiveChange()"> Dépense prospective (échéance future)</label>
+      </div>
+      <div class="form-row" id="facture-alerte-row" style="display:none">
+        <div class="field">
+          <label>Alerte avant l'échéance (jours)</label>
+          <input type="number" id="facture-alerte-jours" min="1" max="365" value="7" placeholder="Ex: 7">
+        </div>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-outline" onclick="closeModal()">Annuler</button>
+      <button class="btn btn-primary" onclick="saveFactureForm()">💾 Enregistrer</button>
+    </div>
+  </div>
+
+</div>
+
+<!-- Toast container -->
+<div id="toast-container"></div>
+
+<!-- ═══════════════════════════════════════════════════════════
+     SUPER ADMIN APP (thème sombre)
+══════════════════════════════════════════════════════════════ -->
+<div id="admin-app" class="hidden">
+
+  <!-- SIDEBAR ADMIN -->
+  <aside class="admin-sidebar">
+    <div class="admin-brand">
+      <div class="admin-brand-icon">💊</div>
+      <div>
+        <div class="admin-brand-title">PHARMA PLATFORM</div>
+        <div class="admin-brand-sub">Super Admin</div>
+      </div>
+    </div>
+    <nav class="admin-nav">
+      <div class="admin-nav-item active" data-view="admin-overview"     onclick="adminNavigate('admin-overview')">    <span>📊</span> Vue d'ensemble</div>
+      <div class="admin-nav-item"        data-view="admin-pharmacies"   onclick="adminNavigate('admin-pharmacies')">  <span>🏥</span> Pharmacies</div>
+      <div class="admin-nav-item"        data-view="admin-utilisateurs" onclick="adminNavigate('admin-utilisateurs')"><span>👥</span> Utilisateurs</div>
+      <div class="admin-nav-item"        data-view="admin-abonnements"  onclick="adminNavigate('admin-abonnements')"> <span>💳</span> Abonnements</div>
+    </nav>
+    <div class="admin-sidebar-footer">
+      <div class="admin-user-info">
+        <div class="admin-avatar" id="admin-avatar">A</div>
+        <div>
+          <div class="admin-user-name" id="admin-name">—</div>
+          <div class="admin-user-role">Super Administrateur</div>
+        </div>
+      </div>
+      <button class="admin-btn-logout" onclick="doLogout()">🚪 Déconnexion</button>
+    </div>
+  </aside>
+
+  <!-- CONTENU ADMIN -->
+  <main class="admin-content">
+
+    <!-- VUE D'ENSEMBLE -->
+    <div id="admin-overview">
+      <div class="admin-topbar">
+        <h2 class="admin-page-title">🏥 Vue d'ensemble</h2>
+        <button class="btn-admin-primary" onclick="openNewPharmacie()">➕ Nouvelle pharmacie</button>
+      </div>
+      <div class="admin-stats-row">
+        <div class="admin-stat-card"><div class="asc-val" id="adm-stat-pharmacies">0</div><div class="asc-label">Pharmacies</div></div>
+        <div class="admin-stat-card"><div class="asc-val" id="adm-stat-users">0</div><div class="asc-label">Utilisateurs</div></div>
+        <div class="admin-stat-card"><div class="asc-val" id="adm-stat-actives">0</div><div class="asc-label">Abonnements actifs</div></div>
+        <div class="admin-stat-card"><div class="asc-val" id="adm-stat-essai">0</div><div class="asc-label">En essai</div></div>
+      </div>
+      <div class="admin-section-title">● TOUTES LES PHARMACIES</div>
+      <div class="admin-pharma-grid" id="adm-pharmacies-grid"></div>
+    </div>
+
+    <!-- PHARMACIES -->
+    <div id="admin-pharmacies" class="hidden">
+      <div class="admin-topbar">
+        <h2 class="admin-page-title">🏥 Gestion des Pharmacies</h2>
+        <button class="btn-admin-primary" onclick="openNewPharmacie()">➕ Nouvelle pharmacie</button>
+      </div>
+      <div class="admin-card">
+        <table class="admin-table">
+          <thead><tr><th>Code</th><th>Nom</th><th>Téléphone</th><th>Utilisateurs</th><th>Statut</th><th>Actions</th></tr></thead>
+          <tbody id="adm-pharma-tbody"></tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- UTILISATEURS -->
+    <div id="admin-utilisateurs" class="hidden">
+      <div class="admin-topbar">
+        <h2 class="admin-page-title">👥 Gestion des Utilisateurs</h2>
+        <button class="btn-admin-primary" onclick="openAdminAddUser()">➕ Nouvel utilisateur</button>
+      </div>
+      <div class="admin-card">
+        <table class="admin-table">
+          <thead><tr><th>Nom</th><th>Email</th><th>Rôle</th><th>Pharmacie</th><th>Créé le</th><th>Actions</th></tr></thead>
+          <tbody id="adm-users-tbody"></tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- ABONNEMENTS -->
+    <div id="admin-abonnements" class="hidden">
+      <div class="admin-topbar">
+        <h2 class="admin-page-title">💳 Gestion des Abonnements</h2>
+      </div>
+      <div class="admin-stats-row" style="margin-bottom:20px">
+        <div class="admin-stat-card" style="border-color:#00b894"><div class="asc-val" style="color:#00b894" id="adm-abo-actif">0</div><div class="asc-label">Actifs</div></div>
+        <div class="admin-stat-card" style="border-color:#e17055"><div class="asc-val" style="color:#e17055" id="adm-abo-expire">0</div><div class="asc-label">Expirés</div></div>
+        <div class="admin-stat-card" style="border-color:#fdcb6e"><div class="asc-val" style="color:#fdcb6e" id="adm-abo-essai">0</div><div class="asc-label">Essai</div></div>
+      </div>
+      <div class="admin-card">
+        <table class="admin-table">
+          <thead><tr><th>Pharmacie</th><th>Statut</th><th>Plan</th><th>Début</th><th>Fin</th><th>Actions</th></tr></thead>
+          <tbody id="adm-abo-tbody"></tbody>
+        </table>
+      </div>
+    </div>
+
+  </main>
+</div>
+
+<!-- MODAUX ADMIN -->
+<div id="admin-modal-overlay" class="admin-modal-overlay hidden">
+
+  <!-- Modal Pharmacie -->
+  <div class="admin-modal hidden" id="adm-modal-pharma">
+    <div class="admin-modal-header">
+      <h3 id="adm-pharma-modal-title">Nouvelle Pharmacie</h3>
+      <button onclick="closeAdminModal()" style="background:none;color:rgba(255,255,255,.6);font-size:20px">×</button>
+    </div>
+    <form id="pharma-form">
+      <input type="hidden" id="pharma-form-id">
+      <div class="admin-form-group">
+        <label>Code pharmacie *</label>
+        <input type="text" id="pharma-code" placeholder="Ex: DAFEANNE" required style="text-transform:uppercase">
+      </div>
+      <div class="admin-form-group">
+        <label>Nom complet</label>
+        <input type="text" id="pharma-nom" placeholder="Ex: Pharmacie Dafeanne">
+      </div>
+      <div class="admin-form-group">
+        <label>Téléphone</label>
+        <input type="text" id="pharma-telephone" placeholder="Ex: +228 90 00 00 00">
+      </div>
+      <div style="display:flex;gap:10px;justify-content:flex-end;margin-top:20px">
+        <button type="button" class="btn btn-outline" onclick="closeAdminModal()">Annuler</button>
+        <button type="submit" class="btn btn-primary">💾 Enregistrer</button>
+      </div>
+    </form>
+  </div>
+
+  <!-- Modal Utilisateur (superadmin) -->
+  <div class="admin-modal hidden" id="adm-modal-user">
+    <div class="admin-modal-header">
+      <h3 id="adm-user-modal-title">Nouvel utilisateur</h3>
+      <button onclick="closeAdminModal()" style="background:none;color:rgba(255,255,255,.6);font-size:20px">×</button>
+    </div>
+    <form id="adm-user-form" onsubmit="event.preventDefault(); doSaveAdminUser()">
+      <input type="hidden" id="adm-user-uid">
+      <div class="admin-form-group">
+        <label>Nom complet *</label>
+        <input type="text" id="adm-user-name" required>
+      </div>
+      <div class="admin-form-group">
+        <label>Email *</label>
+        <input type="email" id="adm-user-email" autocomplete="off" required>
+      </div>
+      <div class="admin-form-group" id="adm-user-password-row">
+        <label>Mot de passe *</label>
+        <input type="password" id="adm-user-password" autocomplete="new-password">
+      </div>
+      <div class="admin-form-group">
+        <label>Rôle *</label>
+        <select id="adm-user-role" onchange="onAdmUserRoleChange()">
+          <option value="titulaire">Pharmacien Titulaire</option>
+          <option value="operateur">Opérateur</option>
+        </select>
+      </div>
+      <div class="admin-form-group">
+        <label>Pharmacie *</label>
+        <select id="adm-user-pharmacie"></select>
+      </div>
+      <div class="admin-form-group" id="adm-user-perms-row" style="display:none">
+        <label style="margin-bottom:8px">Permissions opérateur</label>
+        <div class="perms-grid" style="background:rgba(255,255,255,.05);padding:12px;border-radius:8px">
+          <label class="perm-check" style="color:rgba(255,255,255,.85)"><input type="checkbox" id="adm-perm-cloturer"> Clôturer quinzaine</label>
+          <label class="perm-check" style="color:rgba(255,255,255,.85)"><input type="checkbox" id="adm-perm-rouvrir"> Rouvrir quinzaine</label>
+          <label class="perm-check" style="color:rgba(255,255,255,.85)"><input type="checkbox" id="adm-perm-inam"> Gérer INAM/AMU</label>
+          <label class="perm-check" style="color:rgba(255,255,255,.85)"><input type="checkbox" id="adm-perm-caisse"> Gérer caisse (dépenses)</label>
+          <label class="perm-check" style="color:rgba(255,255,255,.85)"><input type="checkbox" id="adm-perm-recharge"> Recharger caisse</label>
+          <label class="perm-check" style="color:rgba(255,255,255,.85)"><input type="checkbox" id="adm-perm-fournisseurs"> Gérer fournisseurs</label>
+          <label class="perm-check" style="color:rgba(255,255,255,.85)"><input type="checkbox" id="adm-perm-import"> Importer Excel</label>
+        </div>
+      </div>
+      <div style="display:flex;gap:10px;justify-content:flex-end;margin-top:20px">
+        <button type="button" class="btn btn-outline" onclick="closeAdminModal()">Annuler</button>
+        <button type="submit" class="btn btn-primary" id="adm-btn-save-user">💾 Enregistrer</button>
+      </div>
+    </form>
+  </div>
+
+  <!-- Modal Abonnement -->
+  <div class="admin-modal hidden" id="adm-modal-abonnement">
+    <div class="admin-modal-header">
+      <h3>Gérer l'Abonnement</h3>
+      <button onclick="closeAdminModal()" style="background:none;color:rgba(255,255,255,.6);font-size:20px">×</button>
+    </div>
+    <form id="abo-form">
+      <input type="hidden" id="abo-pharma-id">
+      <div class="admin-form-group">
+        <label>Statut</label>
+        <select id="abo-statut">
+          <option value="essai">Essai</option>
+          <option value="actif">Actif</option>
+          <option value="expiré">Expiré</option>
+          <option value="suspendu">Suspendu</option>
+        </select>
+      </div>
+      <div class="admin-form-group">
+        <label>Plan</label>
+        <input type="text" id="abo-plan" placeholder="Ex: Plan Standard">
+      </div>
+      <div style="display:flex;gap:10px;justify-content:flex-end;margin-top:20px">
+        <button type="button" class="btn btn-outline" onclick="closeAdminModal()">Annuler</button>
+        <button type="submit" class="btn btn-primary">💾 Enregistrer</button>
+      </div>
+    </form>
+  </div>
+
+</div>
+
+<!-- ═══════════════════════════════════════════════════════════
+     SCRIPTS (ordre important)
+══════════════════════════════════════════════════════════════ -->
+<!-- Firebase SDK (compat) -->
+<script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore-compat.js"></script>
+
+<!-- Librairies -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.31/jspdf.plugin.autotable.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+
+<!-- App (ordre requis) -->
+<script src="js/firebase-config.js?v=20260713"></script>
+<script src="js/constants.js?v=20260713"></script>
+<script src="js/validation.js?v=20260713"></script>
+<script src="js/state.js?v=20260713"></script>
+<script src="js/logger.js?v=20260713"></script>
+<script src="js/migration.js?v=20260713"></script>
+<script src="js/data.js?v=20260713"></script>
+<script src="js/auth.js?v=20260713"></script>
+<script src="js/import.js?v=20260713"></script>
+<script src="js/export.js?v=20260713"></script>
+<script src="js/app.js?v=20260713"></script>
+<script src="js/import-historique.js?v=20260713"></script>
+
+</body>
+</html>
+<!-- TEST UNIQUE 12345 -->
+<!-- POWERSMELL TEST 54321 -->
