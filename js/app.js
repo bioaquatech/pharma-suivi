@@ -2290,9 +2290,10 @@ async function doSaveUser() {
       const pharmacieId = (currentUser.pharmacieId || (currentUser.pharmacieId || 'DAFEANNE').toUpperCase() || 'PHARMACIE').toUpperCase();
       // Email technique auto-généré, invisible pour l'utilisateur
       const autoEmail = `${pharmacieId.toLowerCase()}_op_${Date.now()}@pharmacie.app`;
-      const newUid = await createAccount(name, autoEmail, password, 'operateur', pharmacieId);
+      const result = await createAccount(name, autoEmail, password, 'operateur', pharmacieId);
+      const newUid = result.uid || result;
       await updateUserProfile(newUid, { permissions });
-      toast('Opérateur créé ✓','success');
+      toast(`Opérateur créé ✓ (Code: ${result.pharmacieId})`, 'success');
     }
     closeModal();
     renderUsers();
@@ -2647,14 +2648,15 @@ async function doSaveAdminUser() {
       toast('Utilisateur modifié ✓','success');
     } else {
       if (!password) { toast('Le mot de passe est obligatoire','error'); btn.disabled=false; btn.textContent='💾 Enregistrer'; return; }
-      await createAccount(name, email, password, role, pharmacieId);
+      const result = await createAccount(name, email, password, role, pharmacieId);
+      const newPharmacieId = result.pharmacieId || pharmacieId;
       // Sauvegarder les permissions si opérateur
       if (role === 'operateur') {
         const allUsers = await getAllUsers();
         const newUser = allUsers.find(u => u.email === email);
         if (newUser) await updateAccount(newUser.uid, { permissions });
       }
-      toast('Utilisateur créé ✓','success');
+      toast(`Utilisateur créé ✓ (Code: ${newPharmacieId})`, 'success');
     }
     closeAdminModal();
     renderAdminUsers();
