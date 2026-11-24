@@ -3967,8 +3967,7 @@ async function openEditFacture(id) {
   document.getElementById('facture-mode').value        = f.mode        || '';
   document.getElementById('facture-numero-cheque').value = f.numeroCheque || '';
   document.getElementById('facture-ref').value         = f.ref         || '';
-  document.getElementById('facture-beneficiaire').value = f.beneficiaire || '';
-  selectBeneficiaire(f.beneficiaire || '');
+  selectBeneficiaire(f.beneficiaire || 'DAFEANNE');
   const prospEl = document.getElementById('facture-prospective');
   if (prospEl) prospEl.checked = !!(f.prospective);
   const alerteRow = document.getElementById('facture-alerte-row');
@@ -3981,7 +3980,8 @@ async function openEditFacture(id) {
 }
 
 function selectBeneficiaire(nom) {
-  document.querySelector(`input[name="beneficiaire"][value="${nom}"]`).checked = true;
+  const radio = document.querySelector(`input[name="beneficiaire"][value="${nom}"]`);
+  if (radio) radio.checked = true;
 }
 
 async function saveFactureForm() {
